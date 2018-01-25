@@ -7,14 +7,14 @@
     "byteball",
     "multisignature"
   ],
-  "homepage": "https://github.com/byteball/byteballcore",
+  "homepage": "https://github.com/dagcoin/core",
   "license": "MIT",
   "repository": {
-    "url": "git://github.com/byteball/byteballcore.git",
+    "url": "git://github.com/dagcoin/core.git",
     "type": "git"
   },
   "bugs": {
-    "url": "https://github.com/byteball/byteballcore/issues"
+    "url": "https://github.com/dagcoin/core/issues"
   },
   "browser": {
     "request": "browser-request",
