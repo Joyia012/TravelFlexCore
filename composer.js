@@ -943,7 +943,6 @@ exports.composePollJoint = composePollJoint;
 exports.composeVoteJoint = composeVoteJoint;
 exports.composeProfileJoint = composeProfileJoint;
 exports.composeAttestationJoint = composeAttestationJoint;
-exports.composeAssetDefinitionJoint = composeAssetDefinitionJoint;
 exports.composeAssetAttestorsJoint = composeAssetAttestorsJoint;
 
 exports.composeJoint = composeJoint;
