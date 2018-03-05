@@ -153,32 +153,6 @@ function saveJoint(objJoint, objValidationState, preCommitCallback, onDone) {
 							conn.addQuery(arrQueries, "INSERT INTO attestations (unit, message_index, attestor_address, address) VALUES(?,?,?,?)", 
 								[objUnit.unit, i, objUnit.authors[0].address, attestation.address]);
 							break;
-						case "asset":
-							var asset = message.payload;
-							conn.addQuery(arrQueries, "INSERT INTO assets (unit, message_index, \n\
-								cap, is_private, is_transferrable, auto_destroy, fixed_denominations, \n\
-								issued_by_definer_only, cosigned_by_definer, spender_attested, \n\
-								issue_condition, transfer_condition) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)", 
-								[objUnit.unit, i, 
-								asset.cap, asset.is_private?1:0, asset.is_transferrable?1:0, asset.auto_destroy?1:0, asset.fixed_denominations?1:0, 
-								asset.issued_by_definer_only?1:0, asset.cosigned_by_definer?1:0, asset.spender_attested?1:0, 
-								asset.issue_condition ? JSON.stringify(asset.issue_condition) : null,
-								asset.transfer_condition ? JSON.stringify(asset.transfer_condition) : null]);
-							if (asset.attestors){
-								for (var j=0; j<asset.attestors.length; j++){
-									conn.addQuery(arrQueries, 
-										"INSERT INTO asset_attestors (unit, message_index, asset, attestor_address) VALUES(?,?,?,?)",
-										[objUnit.unit, i, objUnit.unit, asset.attestors[j]]);
-								}
-							}
-							if (asset.denominations){
-								for (var j=0; j<asset.denominations.length; j++){
-									conn.addQuery(arrQueries, 
-										"INSERT INTO asset_denominations (asset, denomination, count_coins) VALUES(?,?,?)",
-										[objUnit.unit, asset.denominations[j].denomination, asset.denominations[j].count_coins]);
-								}
-							}
-							break;
 						case "asset_attestors":
 							var asset_attestors = message.payload;
 							for (var j=0; j<asset_attestors.attestors.length; j++){

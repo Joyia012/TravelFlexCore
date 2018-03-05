@@ -1029,7 +1029,7 @@ function validateMessage(conn, objMessage, message_index, objUnit, objValidation
 			return callback("private payment must come with spend proof(s)");
 	}
 	
-	var arrInlineOnlyApps = ["address_definition_change", "data_feed", "definition_template", "asset", "asset_attestors", "attestation", "poll", "vote"];
+	var arrInlineOnlyApps = ["address_definition_change", "data_feed", "definition_template", "asset_attestors", "attestation", "poll", "vote"];
 	if (arrInlineOnlyApps.indexOf(objMessage.app) >= 0 && objMessage.payload_location !== "inline")
 		return callback(objMessage.app+" must be inline");
 
@@ -1250,13 +1250,6 @@ function validateInlinePayload(conn, objMessage, message_index, objUnit, objVali
 			// it is also ok to attest oneself
 			return callback();
 
-		case "asset":
-			if (objValidationState.bHasAssetDefinition)
-				return callback("can be only one asset definition");
-			objValidationState.bHasAssetDefinition = true;
-			validateAssetDefinition(conn, payload, objUnit, objValidationState, callback);
-			break;
-
 		case "asset_attestors":
 			if (!objValidationState.assocHasAssetAttestors)
 				objValidationState.assocHasAssetAttestors = {};
@@ -1296,7 +1289,7 @@ function validatePayment(conn, payload, message_index, objUnit, objValidationSta
 	storage.loadAssetWithListOfAttestedAuthors(conn, payload.asset, objValidationState.last_ball_mci, arrAuthorAddresses, function(err, objAsset){
 		if (err)
 			return callback(err);
-		if (hasFieldsExcept(payload, ["inputs", "outputs", "asset", "denomination"]))
+		if (hasFieldsExcept(payload, ["inputs", "outputs", "denomination"]))
 			return callback("unknown fields in payment message");
 		if (!isNonemptyArray(payload.inputs))
 			return callback("no inputs");

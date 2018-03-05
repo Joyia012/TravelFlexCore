@@ -357,10 +357,6 @@ function composeAttestationJoint(from_address, attested_address, profile_data, s
 	composeContentJoint(from_address, "attestation", {address: attested_address, profile: profile_data}, signer, callbacks);
 }
 
-function composeAssetDefinitionJoint(from_address, asset_definition, signer, callbacks){
-	composeContentJoint(from_address, "asset", asset_definition, signer, callbacks);
-}
-
 function composeAssetAttestorsJoint(from_address, asset, arrNewAttestors, signer, callbacks){
 	composeContentJoint(from_address, "asset_attestors", {asset: asset, attestors: arrNewAttestors}, signer, callbacks);
 }
