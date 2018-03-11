@@ -49,31 +49,31 @@ var assocKnownPeers = {};
 var exchangeRates = {};
 
 if (process.browser){ // browser
-	console.log("defining .on() on ws");
-	WebSocket.prototype.on = function(event, callback) {
-		var self = this;
-		if (event === 'message'){
-			this['on'+event] = function(event){
-				callback.call(self, event.data);
-			};
-			return;
-		}
-		if (event !== 'open'){
-			this['on'+event] = callback;
-			return;
-		}
-		// allow several handlers for 'open' event
-		if (!this['open_handlers'])
-			this['open_handlers'] = [];
-		this['open_handlers'].push(callback);
-		this['on'+event] = function(){
-			self['open_handlers'].forEach(function(cb){
-				cb();
-			});
-		};
-	};
-	WebSocket.prototype.once = WebSocket.prototype.on;
-	WebSocket.prototype.setMaxListeners = function(){};
+  console.log("defining .on() on ws");
+  WebSocket.prototype.on = function(event, callback) {
+    var self = this;
+    if (event === 'message'){
+      this['on'+event] = function(event){
+        callback.call(self, event.data);
+      };
+      return;
+    }
+    if (event !== 'open'){
+      this['on'+event] = callback;
+      return;
+    }
+    // allow several handlers for 'open' event
+    if (!this['open_handlers'])
+      this['open_handlers'] = [];
+    this['open_handlers'].push(callback);
+    this['on'+event] = function(){
+      self['open_handlers'].forEach(function(cb){
+        cb();
+      });
+    };
+  };
+  WebSocket.prototype.once = WebSocket.prototype.on;
+  WebSocket.prototype.setMaxListeners = function(){};
 }
 
 // if not using a hub and accepting messages directly (be your own hub)
@@ -81,8 +81,8 @@ var my_device_address;
 var objMyTempPubkeyPackage;
 
 function setMyDeviceProps(device_address, objTempPubkey){
-	my_device_address = device_address;
-	objMyTempPubkeyPackage = objTempPubkey;
+  my_device_address = device_address;
+  objMyTempPubkeyPackage = objTempPubkey;
 }
 
 exports.light_vendor_url = null;
@@ -90,37 +90,37 @@ exports.light_vendor_url = null;
 // general network functions
 
 function sendMessage(ws, type, content) {
-	var message = JSON.stringify([type, content]);
-	if (ws.readyState !== ws.OPEN)
-		return console.log("readyState="+ws.readyState+' on peer '+ws.peer+', will not send '+message);
-	console.log("SENDING "+message+" to "+ws.peer);
-	ws.send(message);
+  var message = JSON.stringify([type, content]);
+  if (ws.readyState !== ws.OPEN)
+    return console.log("readyState="+ws.readyState+' on peer '+ws.peer+', will not send '+message);
+  console.log("SENDING "+message+" to "+ws.peer);
+  ws.send(message);
 }
 
 function sendJustsaying(ws, subject, body){
-	sendMessage(ws, 'justsaying', {subject: subject, body: body});
+  sendMessage(ws, 'justsaying', {subject: subject, body: body});
 }
 
 function sendAllInboundJustsaying(subject, body){
-	wss.clients.forEach(function(ws){
-		sendMessage(ws, 'justsaying', {subject: subject, body: body});
-	});
+  wss.clients.forEach(function(ws){
+    sendMessage(ws, 'justsaying', {subject: subject, body: body});
+  });
 }
 
 function sendError(ws, error) {
-	sendJustsaying(ws, 'error', error);
+  sendJustsaying(ws, 'error', error);
 }
 
 function sendInfo(ws, content) {
-	sendJustsaying(ws, 'info', content);
+  sendJustsaying(ws, 'info', content);
 }
 
 function sendResult(ws, content) {
-	sendJustsaying(ws, 'result', content);
+  sendJustsaying(ws, 'result', content);
 }
 
 function sendErrorResult(ws, unit, error) {
-	sendResult(ws, {unit: unit, result: 'error', error: error});
+  sendResult(ws, {unit: unit, result: 'error', error: error});
 }
 
 function sendVersion(ws){
@@ -598,25 +598,25 @@ function handleNewPeers(ws, request, arrPeerUrls){
 }
 
 function heartbeat(){
-	// just resumed after sleeping
-	var bJustResumed = (typeof window !== 'undefined' && window && window.cordova && Date.now() - last_hearbeat_wake_ts > 2*HEARTBEAT_TIMEOUT);
-	last_hearbeat_wake_ts = Date.now();
-	wss.clients.concat(arrOutboundPeers).forEach(function(ws){
-		if (ws.bSleeping)
-			return;
-		var elapsed_since_last_received = Date.now() - ws.last_ts;
-		if (elapsed_since_last_received < HEARTBEAT_TIMEOUT)
-			return;
-		if (!ws.last_sent_heartbeat_ts || bJustResumed){
-			ws.last_sent_heartbeat_ts = Date.now();
-			return sendRequest(ws, 'heartbeat', null, false, handleHeartbeatResponse);
-		}
-		var elapsed_since_last_sent_heartbeat = Date.now() - ws.last_sent_heartbeat_ts;
-		if (elapsed_since_last_sent_heartbeat < HEARTBEAT_RESPONSE_TIMEOUT)
-			return;
-		console.log('will disconnect peer '+ws.peer+' who was silent for '+elapsed_since_last_received+'ms');
-		ws.close(1000, "lost connection");
-	});
+  // just resumed after sleeping
+  var bJustResumed = (typeof window !== 'undefined' && window && window.cordova && Date.now() - last_hearbeat_wake_ts > 2*HEARTBEAT_TIMEOUT);
+  last_hearbeat_wake_ts = Date.now();
+  wss.clients.concat(arrOutboundPeers).forEach(function(ws){
+    if (ws.bSleeping || ws.readyState !== ws.OPEN)
+      return;
+    var elapsed_since_last_received = Date.now() - ws.last_ts;
+    if (elapsed_since_last_received < HEARTBEAT_TIMEOUT)
+      return;
+    if (!ws.last_sent_heartbeat_ts || bJustResumed){
+      ws.last_sent_heartbeat_ts = Date.now();
+      return sendRequest(ws, 'heartbeat', null, false, handleHeartbeatResponse);
+    }
+    var elapsed_since_last_sent_heartbeat = Date.now() - ws.last_sent_heartbeat_ts;
+    if (elapsed_since_last_sent_heartbeat < HEARTBEAT_RESPONSE_TIMEOUT)
+      return;
+    console.log('will disconnect peer '+ws.peer+' who was silent for '+elapsed_since_last_received+'ms');
+    ws.close(1000, "lost connection");
+  });
 }
 
 function handleHeartbeatResponse(ws, request, response){
@@ -1462,7 +1462,8 @@ function requestCatchup(ws){
 					// to avoid duplicate requests, we are raising this flag before actually sending the request 
 					// (will also reset the flag only after the response is fully processed)
 					bWaitingForCatchupChain = true;
-					
+
+					console.log('will read last stable mci for catchup');
 					storage.readLastStableMcIndex(db, function(last_stable_mci){
 						storage.readLastMainChainIndex(function(last_known_mci){
 							myWitnesses.readMyWitnesses(function(arrWitnesses){
@@ -2705,17 +2706,17 @@ function start(){
 }
 
 function closeAllWsConnections() {
-	arrOutboundPeers.forEach(function(ws) {
-		ws.close(1000,'Re-connect');
-	});
+  arrOutboundPeers.forEach(function(ws) {
+    ws.close(1000,'Re-connect');
+  });
 }
 
 function isConnected(){
-	return (arrOutboundPeers.length + wss.clients.length);
+  return (arrOutboundPeers.length + wss.clients.length);
 }
 
 function isCatchingUp(){
-	return bCatchingUp;
+  return bCatchingUp;
 }
 
 start();

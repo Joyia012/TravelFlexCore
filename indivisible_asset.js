@@ -687,99 +687,100 @@ function buildPrivateElementsChain(conn, unit, message_index, output_index, payl
 }
 
 function composeIndivisibleAssetPaymentJoint(params){
-	console.log("indivisible payment from "+params.paying_addresses, params);
-	if ((params.to_address || params.amount) && params.asset_outputs)
-		throw Error("to_address and asset_outputs at the same time");
-	if (params.asset_outputs){
-		if (params.asset_outputs.length !== 1)
-			throw Error("multiple indivisible asset outputs not supported");
-		params.amount = params.asset_outputs[0].amount;
-		params.to_address = params.asset_outputs[0].address;
-	}
-	if (!ValidationUtils.isNonemptyArray(params.fee_paying_addresses))
-		throw Error('no fee_paying_addresses');
-	composer.composeJoint({
-		paying_addresses: _.union(params.paying_addresses, params.fee_paying_addresses), // addresses that pay for the transfer and commissions
-		signing_addresses: params.signing_addresses,
-		minimal: params.minimal,
-		outputs: [{address: params.fee_paying_addresses[0], amount: 0}], // public outputs in bytes: the change only
-		
-		// function that creates additional messages to be added to the joint
-		retrieveMessages: function createAdditionalMessages(conn, last_ball_mci, bMultiAuthored, arrPayingAddresses, onDone){
-			var arrAssetPayingAddresses = _.intersection(arrPayingAddresses, params.paying_addresses);
-			storage.loadAssetWithListOfAttestedAuthors(conn, params.asset, last_ball_mci, arrAssetPayingAddresses, function(err, objAsset){
-				if (err)
-					return onDone(err);
-				if (!objAsset.fixed_denominations)
-					return onDone("divisible asset type");
-				if (!objAsset.is_transferrable && params.to_address !== objAsset.definer_address && arrAssetPayingAddresses.indexOf(objAsset.definer_address) === -1)
-					return onDone("the asset is not transferrable and definer not found on either side of the deal");
-				if (objAsset.cosigned_by_definer && arrPayingAddresses.concat(params.signing_addresses || []).indexOf(objAsset.definer_address) === -1)
-					return onDone("the asset must be cosigned by definer");
-				if (objAsset.spender_attested && objAsset.arrAttestedAddresses.length === 0)
-					return onDone("none of the authors is attested");
-				
-				pickIndivisibleCoinsForAmount(
-					conn, objAsset, arrAssetPayingAddresses, last_ball_mci, 
-					params.to_address, params.change_address,
-					params.amount, params.tolerance_plus || 0, params.tolerance_minus || 0, 
-					bMultiAuthored, 
-					function(err, arrPayloadsWithProofs){
-						if (!arrPayloadsWithProofs)
-							return onDone({
-								error_code: "NOT_ENOUGH_FUNDS", 
-								error: err
-							});
-						var arrMessages = [];
-						var assocPrivatePayloads = {};
-						for (var i=0; i<arrPayloadsWithProofs.length; i++){
-							var payload = arrPayloadsWithProofs[i].payload;
-							var payload_hash;// = objectHash.getBase64Hash(payload);
-							if (objAsset.is_private){
-								payload.outputs.forEach(function(o){
-									o.output_hash = objectHash.getBase64Hash({address: o.address, blinding: o.blinding});
-								});
-								var hidden_payload = _.cloneDeep(payload);
-								hidden_payload.outputs.forEach(function(o){
-									delete o.address;
-									delete o.blinding;
-								});
-								payload_hash = objectHash.getBase64Hash(hidden_payload);
-							}
-							else
-								payload_hash = objectHash.getBase64Hash(payload);
-							var objMessage = {
-								app: "payment",
-								payload_location: objAsset.is_private ? "none" : "inline",
-								payload_hash: payload_hash
-							};
-							if (objAsset.is_private){
-								assocPrivatePayloads[payload_hash] = payload;
-								objMessage.spend_proofs = [arrPayloadsWithProofs[i].spend_proof];
-							}
-							else
-								objMessage.payload = payload;
-							arrMessages.push(objMessage);
-						}
-						// messages are sorted in descending order by denomination of the coin, so shuffle them to avoid giving any clues
-						shuffleArray(arrMessages);
-						console.log("composed messages "+JSON.stringify(arrMessages));
-						onDone(null, arrMessages, assocPrivatePayloads);
-					}
-				);
-			});
-		},
-		
-		signer: params.signer, 
-		
-		callbacks: {
-			ifError: params.callbacks.ifError,
-			ifNotEnoughFunds: params.callbacks.ifNotEnoughFunds,
-			ifOk: function(objJoint, assocPrivatePayloads, composer_unlock_callback){
-				params.callbacks.ifOk(objJoint, assocPrivatePayloads, composer_unlock_callback);
-			}
-		}
-	});
+  console.log("indivisible payment from "+params.paying_addresses, params);
+  if ((params.to_address || params.amount) && params.asset_outputs)
+    throw Error("to_address and asset_outputs at the same time");
+  if (params.asset_outputs && params.asset_outputs.length !== 1)
+    throw Error("multiple indivisible asset outputs not supported");
+  if (!ValidationUtils.isNonemptyArray(params.fee_paying_addresses))
+    throw Error('no fee_paying_addresses');
+  var arrBaseOutputs = [{address: params.fee_paying_addresses[0], amount: 0}]; // public outputs: the change only
+  if (params.base_outputs)
+    arrBaseOutputs = arrBaseOutputs.concat(params.base_outputs);
+  composer.composeJoint({
+    paying_addresses: _.union(params.paying_addresses, params.fee_paying_addresses), // addresses that pay for the transfer and commissions
+    signing_addresses: params.signing_addresses,
+    minimal: params.minimal,
+    outputs: arrBaseOutputs,
+
+    // function that creates additional messages to be added to the joint
+    retrieveMessages: function createAdditionalMessages(conn, last_ball_mci, bMultiAuthored, arrPayingAddresses, onDone){
+      var arrAssetPayingAddresses = _.intersection(arrPayingAddresses, params.paying_addresses);
+      storage.loadAssetWithListOfAttestedAuthors(conn, params.asset, last_ball_mci, arrAssetPayingAddresses, function(err, objAsset){
+        if (err)
+          return onDone(err);
+        if (!objAsset.fixed_denominations)
+          return onDone("divisible asset type");
+        if (!objAsset.is_transferrable && params.to_address !== objAsset.definer_address && arrAssetPayingAddresses.indexOf(objAsset.definer_address) === -1)
+          return onDone("the asset is not transferrable and definer not found on either side of the deal");
+        if (objAsset.cosigned_by_definer && arrPayingAddresses.concat(params.signing_addresses || []).indexOf(objAsset.definer_address) === -1)
+          return onDone("the asset must be cosigned by definer");
+        if (objAsset.spender_attested && objAsset.arrAttestedAddresses.length === 0)
+          return onDone("none of the authors is attested");
+
+        var target_amount = params.to_address ? params.amount : params.asset_outputs[0].amount;
+        var to_address = params.to_address ? params.to_address : params.asset_outputs[0].address;
+        pickIndivisibleCoinsForAmount(
+          conn, objAsset, arrAssetPayingAddresses, last_ball_mci,
+          to_address, params.change_address,
+          target_amount, params.tolerance_plus || 0, params.tolerance_minus || 0,
+          bMultiAuthored,
+          function(err, arrPayloadsWithProofs){
+            if (!arrPayloadsWithProofs)
+              return onDone({
+                error_code: "NOT_ENOUGH_FUNDS",
+                error: err
+              });
+            var arrMessages = [];
+            var assocPrivatePayloads = {};
+            for (var i=0; i<arrPayloadsWithProofs.length; i++){
+              var payload = arrPayloadsWithProofs[i].payload;
+              var payload_hash;// = objectHash.getBase64Hash(payload);
+              if (objAsset.is_private){
+                payload.outputs.forEach(function(o){
+                  o.output_hash = objectHash.getBase64Hash({address: o.address, blinding: o.blinding});
+                });
+                var hidden_payload = _.cloneDeep(payload);
+                hidden_payload.outputs.forEach(function(o){
+                  delete o.address;
+                  delete o.blinding;
+                });
+                payload_hash = objectHash.getBase64Hash(hidden_payload);
+              }
+              else
+                payload_hash = objectHash.getBase64Hash(payload);
+              var objMessage = {
+                app: "payment",
+                payload_location: objAsset.is_private ? "none" : "inline",
+                payload_hash: payload_hash
+              };
+              if (objAsset.is_private){
+                assocPrivatePayloads[payload_hash] = payload;
+                objMessage.spend_proofs = [arrPayloadsWithProofs[i].spend_proof];
+              }
+              else
+                objMessage.payload = payload;
+              arrMessages.push(objMessage);
+            }
+            // messages are sorted in descending order by denomination of the coin, so shuffle them to avoid giving any clues
+            shuffleArray(arrMessages);
+            console.log("composed messages "+JSON.stringify(arrMessages));
+            onDone(null, arrMessages, assocPrivatePayloads);
+          }
+        );
+      });
+    },
+
+    signer: params.signer,
+
+    callbacks: {
+      ifError: params.callbacks.ifError,
+      ifNotEnoughFunds: params.callbacks.ifNotEnoughFunds,
+      ifOk: function(objJoint, assocPrivatePayloads, composer_unlock_callback){
+        params.callbacks.ifOk(objJoint, assocPrivatePayloads, composer_unlock_callback);
+      }
+    }
+  });
 }
 
 // ifOk validates and saves before calling back
@@ -1099,7 +1100,7 @@ function getToAddress(params){
 exports.getSavingCallbacks = getSavingCallbacks;
 exports.validateAndSavePrivatePaymentChain = validateAndSavePrivatePaymentChain;
 exports.restorePrivateChains = restorePrivateChains;
+exports.composeMinimalIndivisibleAssetPaymentJoint = composeMinimalIndivisibleAssetPaymentJoint;
 exports.composeAndSaveIndivisibleAssetPaymentJoint = composeAndSaveIndivisibleAssetPaymentJoint;
 exports.composeAndSaveMinimalIndivisibleAssetPaymentJoint = composeAndSaveMinimalIndivisibleAssetPaymentJoint;
 exports.updateIndivisibleOutputsThatWereReceivedUnstable = updateIndivisibleOutputsThatWereReceivedUnstable;
-

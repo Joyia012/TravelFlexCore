@@ -210,66 +210,68 @@ function purgeUncoveredNonserialJoints(bByExistenceOfChildren, onDone){
 				WHERE wunits."+order_column+" > units."+order_column+" \n\
 				LIMIT 0,1 \n\
 			)) \n\
-			/* AND NOT EXISTS (SELECT * FROM unhandled_joints) */", 
-		// some unhandled joints may depend on the unit to be archived but it is not in dependencies because it was known when its child was received
-	//	[constants.MAJORITY_OF_WITNESSES - 1],
-		function(rows){
-			async.eachSeries(
-				rows,
-				function(row, cb){
-					breadcrumbs.add("--------------- archiving uncovered unit "+row.unit);
-					storage.readJoint(db, row.unit, {
-						ifNotFound: function(){
-							throw Error("nonserial unit not found?");
-						},
-						ifFound: function(objJoint){
-							db.takeConnectionFromPool(function(conn){
-								mutex.lock(["write"], function(unlock){
-									var arrQueries = [];
-									conn.addQuery(arrQueries, "BEGIN");
-									archiving.generateQueriesToArchiveJoint(conn, objJoint, 'uncovered', arrQueries, function(){
-										conn.addQuery(arrQueries, "COMMIT");
-										async.series(arrQueries, function(){
-											unlock();
-											conn.release();
-											breadcrumbs.add("------- done archiving "+row.unit);
-											var parent_units = storage.assocUnstableUnits[row.unit].parent_units;
-											storage.forgetUnit(row.unit);
-											parent_units.forEach(function(parent_unit){
-												var bHasChildren = false;
-												for (var unit in storage.assocUnstableUnits){
-													var o = storage.assocUnstableUnits[unit];
-													if (o.parent_units.indexOf(parent_unit) >= 0)
-														bHasChildren = true;
-												}
-												if (!bHasChildren)
-													storage.assocUnstableUnits[parent_unit].is_free = 1;
-											});
-											cb();
-										});
-									});
-								});
-							});
-						}
-					});
-				},
-				function(){
-					if (rows.length > 0)
-						return purgeUncoveredNonserialJoints(true, onDone); // to clean chains of bad units
-					if (!bByExistenceOfChildren)
-						return onDone();
-					// else 0 rows and bByExistenceOfChildren
-					db.query(
-						"UPDATE units SET is_free=1 WHERE is_free=0 AND is_stable=0 \n\
-						AND (SELECT 1 FROM parenthoods WHERE parent_unit=unit LIMIT 1) IS NULL",
-						function(){
-							onDone();
-						}
-					);
-				}
-			);
-		}
-	);
+			/* AND NOT EXISTS (SELECT * FROM unhandled_joints) */",
+    // some unhandled joints may depend on the unit to be archived but it is not in dependencies because it was known when its child was received
+    //	[constants.MAJORITY_OF_WITNESSES - 1],
+    function(rows){
+      async.eachSeries(
+        rows,
+        function(row, cb){
+          breadcrumbs.add("--------------- archiving uncovered unit "+row.unit);
+          storage.readJoint(db, row.unit, {
+            ifNotFound: function(){
+              throw Error("nonserial unit not found?");
+            },
+            ifFound: function(objJoint){
+              db.takeConnectionFromPool(function(conn){
+                mutex.lock(["write"], function(unlock){
+                  var arrQueries = [];
+                  conn.addQuery(arrQueries, "BEGIN");
+                  archiving.generateQueriesToArchiveJoint(conn, objJoint, 'uncovered', arrQueries, function(){
+                    conn.addQuery(arrQueries, "COMMIT");
+                    async.series(arrQueries, function(){
+                      unlock();
+                      conn.release();
+                      breadcrumbs.add("------- done archiving "+row.unit);
+                      var parent_units = storage.assocUnstableUnits[row.unit].parent_units;
+                      storage.forgetUnit(row.unit);
+                      parent_units.forEach(function(parent_unit){
+                        if (!storage.assocUnstableUnits[parent_unit]) // the parent is already stable
+                          return;
+                        var bHasChildren = false;
+                        for (var unit in storage.assocUnstableUnits){
+                          var o = storage.assocUnstableUnits[unit];
+                          if (o.parent_units.indexOf(parent_unit) >= 0)
+                            bHasChildren = true;
+                        }
+                        if (!bHasChildren)
+                          storage.assocUnstableUnits[parent_unit].is_free = 1;
+                      });
+                      cb();
+                    });
+                  });
+                });
+              });
+            }
+          });
+        },
+        function(){
+          if (rows.length > 0)
+            return purgeUncoveredNonserialJoints(true, onDone); // to clean chains of bad units
+          if (!bByExistenceOfChildren)
+            return onDone();
+          // else 0 rows and bByExistenceOfChildren
+          db.query(
+            "UPDATE units SET is_free=1 WHERE is_free=0 AND is_stable=0 \n\
+            AND (SELECT 1 FROM parenthoods WHERE parent_unit=unit LIMIT 1) IS NULL",
+            function(){
+              onDone();
+            }
+          );
+        }
+      );
+    }
+  );
 }
 
 // handleJoint is called for every joint younger than mci

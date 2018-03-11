@@ -77,10 +77,14 @@ function updateMainChain(conn, from_unit, last_added_unit, onDone){
 		profiler.start();
 		findNextUpMainChainUnit(unit, function(best_parent_unit){
 			storage.readUnitProps(conn, best_parent_unit, function(objBestParentUnitProps){
-				var objBestParentUnitProps2 = storage.assocUnstableUnits[best_parent_unit];
-				if (!objBestParentUnitProps2)
-					throw Error("unstable unit not found: "+best_parent_unit);
-				var objBestParentUnitPropsForCheck = _.cloneDeep(objBestParentUnitProps2);
+     var objBestParentUnitProps2 = storage.assocUnstableUnits[best_parent_unit];
+     if (!objBestParentUnitProps2){
+       if (storage.isGenesisUnit(best_parent_unit))
+         objBestParentUnitProps2 = storage.assocStableUnits[best_parent_unit];
+       else
+         throw Error("unstable unit not found: "+best_parent_unit);
+     }
+    var objBestParentUnitPropsForCheck = _.cloneDeep(objBestParentUnitProps2);
 				delete objBestParentUnitPropsForCheck.parent_units;
 				if (!_.isEqual(objBestParentUnitPropsForCheck, objBestParentUnitProps))
 					throwError("different props, db: "+JSON.stringify(objBestParentUnitProps)+", unstable: "+JSON.stringify(objBestParentUnitProps2));
@@ -552,10 +556,10 @@ function updateMainChain(conn, from_unit, last_added_unit, onDone){
 
 /*
 
-// climbs up along best parent links up, returns list of units encountered with level >= min_level
-function createListOfPrivateMcUnits(start_unit, min_level, handleList){
+	// climbs up along best parent links up, returns list of units encountered with level >= min_level
+	function createListOfPrivateMcUnits(start_unit, min_level, handleList){
 	var arrUnits = [];
-	
+
 	function goUp(unit){
 		conn.query(
 			"SELECT best_parent_unit, level FROM units WHERE unit=?", [unit],
@@ -965,78 +969,81 @@ function markMcIndexStable(conn, mci, onDone){
 	}
 	
 
-	function addBalls(){
-		conn.query(
-			"SELECT units.*, ball FROM units LEFT JOIN balls USING(unit) \n\
-			WHERE main_chain_index=? ORDER BY level", [mci], 
-			function(unit_rows){
-				async.eachSeries(
-					unit_rows,
-					function(objUnitProps, cb){
-						var unit = objUnitProps.unit;
-						conn.query(
-							"SELECT ball FROM parenthoods LEFT JOIN balls ON parent_unit=unit WHERE child_unit=? ORDER BY ball", 
-							[unit], 
-							function(parent_ball_rows){
-								if (parent_ball_rows.some(function(parent_ball_row){ return (parent_ball_row.ball === null); }))
-									throw Error("some parent balls not found for unit "+unit);
-								var arrParentBalls = parent_ball_rows.map(function(parent_ball_row){ return parent_ball_row.ball; });
-								var arrSimilarMcis = getSimilarMcis(mci);
-								var arrSkiplistUnits = [];
-								var arrSkiplistBalls = [];
-								if (objUnitProps.is_on_main_chain === 1 && arrSimilarMcis.length > 0){
-									conn.query(
-										"SELECT units.unit, ball FROM units LEFT JOIN balls USING(unit) \n\
-										WHERE is_on_main_chain=1 AND main_chain_index IN(?)", 
-										[arrSimilarMcis],
-										function(rows){
-											rows.forEach(function(row){
-												var skiplist_unit = row.unit;
-												var skiplist_ball = row.ball;
-												if (!skiplist_ball)
-													throw Error("no skiplist ball");
-												arrSkiplistUnits.push(skiplist_unit);
-												arrSkiplistBalls.push(skiplist_ball);
-											});
-											addBall();
-										}
-									);
-								}
-								else
-									addBall();
-								
-								function addBall(){
-									var ball = objectHash.getBallHash(unit, arrParentBalls, arrSkiplistBalls.sort(), objUnitProps.sequence === 'final-bad');
-									if (objUnitProps.ball){ // already inserted
-										if (objUnitProps.ball !== ball)
-											throw Error("stored and calculated ball hashes do not match, ball="+ball+", objUnitProps="+JSON.stringify(objUnitProps));
-										return cb();
-									}
-									conn.query("INSERT INTO balls (ball, unit) VALUES(?,?)", [ball, unit], function(){
-										conn.query("DELETE FROM hash_tree_balls WHERE ball=?", [ball], function(){
-											if (arrSkiplistUnits.length === 0)
-												return cb();
-											conn.query(
-												"INSERT INTO skiplist_units (unit, skiplist_unit) VALUES "
-												+arrSkiplistUnits.map(function(skiplist_unit){
-													return "("+conn.escape(unit)+", "+conn.escape(skiplist_unit)+")"; 
-												}), 
-												function(){ cb(); }
-											);
-										});
-									});
-								}
-							}
-						);
-					},
-					function(){
-						// next op
-						updateRetrievable();
-					}
-				);
-			}
-		);
-	}
+  function addBalls(){
+    conn.query(
+      "SELECT units.*, ball FROM units LEFT JOIN balls USING(unit) \n\
+      WHERE main_chain_index=? ORDER BY level", [mci],
+      function(unit_rows){
+        if (unit_rows.length === 0)
+          throw Error("no units on mci "+mci);
+        async.eachSeries(
+          unit_rows,
+          function(objUnitProps, cb){
+            var unit = objUnitProps.unit;
+            conn.query(
+              "SELECT ball FROM parenthoods LEFT JOIN balls ON parent_unit=unit WHERE child_unit=? ORDER BY ball",
+              [unit],
+              function(parent_ball_rows){
+                if (parent_ball_rows.some(function(parent_ball_row){ return (parent_ball_row.ball === null); }))
+                  throw Error("some parent balls not found for unit "+unit);
+                var arrParentBalls = parent_ball_rows.map(function(parent_ball_row){ return parent_ball_row.ball; });
+                var arrSimilarMcis = getSimilarMcis(mci);
+                var arrSkiplistUnits = [];
+                var arrSkiplistBalls = [];
+                if (objUnitProps.is_on_main_chain === 1 && arrSimilarMcis.length > 0){
+                  conn.query(
+                    "SELECT units.unit, ball FROM units LEFT JOIN balls USING(unit) \n\
+                    WHERE is_on_main_chain=1 AND main_chain_index IN(?)",
+                    [arrSimilarMcis],
+                    function(rows){
+                      rows.forEach(function(row){
+                        var skiplist_unit = row.unit;
+                        var skiplist_ball = row.ball;
+                        if (!skiplist_ball)
+                          throw Error("no skiplist ball");
+                        arrSkiplistUnits.push(skiplist_unit);
+                        arrSkiplistBalls.push(skiplist_ball);
+                      });
+                      addBall();
+                    }
+                  );
+                }
+                else
+                  addBall();
+
+                function addBall(){
+                  var ball = objectHash.getBallHash(unit, arrParentBalls, arrSkiplistBalls.sort(), objUnitProps.sequence === 'final-bad');
+                  console.log("ball="+ball);
+                  if (objUnitProps.ball){ // already inserted
+                    if (objUnitProps.ball !== ball)
+                      throw Error("stored and calculated ball hashes do not match, ball="+ball+", objUnitProps="+JSON.stringify(objUnitProps));
+                    return cb();
+                  }
+                  conn.query("INSERT INTO balls (ball, unit) VALUES(?,?)", [ball, unit], function(){
+                    conn.query("DELETE FROM hash_tree_balls WHERE ball=?", [ball], function(){
+                      if (arrSkiplistUnits.length === 0)
+                        return cb();
+                      conn.query(
+                        "INSERT INTO skiplist_units (unit, skiplist_unit) VALUES "
+                        +arrSkiplistUnits.map(function(skiplist_unit){
+                          return "("+conn.escape(unit)+", "+conn.escape(skiplist_unit)+")";
+                        }),
+                        function(){ cb(); }
+                      );
+                    });
+                  });
+                }
+              }
+            );
+          },
+          function(){
+            // next op
+            updateRetrievable();
+          }
+        );
+      }
+    );
+  }
 
 	function updateRetrievable(){
 		storage.updateMinRetrievableMciAfterStabilizingMci(conn, mci, function(min_retrievable_mci){

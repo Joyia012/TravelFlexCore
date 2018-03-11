@@ -34,10 +34,10 @@ var isValidBase64 = ValidationUtils.isValidBase64;
 
 function hasValidHashes(objJoint){
 	var objUnit = objJoint.unit;
-	
+
 	if (objectHash.getUnitHash(objUnit) !== objUnit.unit)
 		return false;
-	
+
 	return true;
 }
 
@@ -860,7 +860,7 @@ function validateAuthor(conn, objAuthor, objUnit, objValidationState, callback){
 	
 	// This was bad idea.  An uncovered nonserial, if not archived, will block new units from this address forever.
 	/*
-	function checkNoPendingOrRetrievableNonserialIncluded(){
+		function checkNoPendingOrRetrievableNonserialIncluded(){
 		var next = validateDefinition;
 		conn.query(
 			"SELECT lb_units.main_chain_index FROM units JOIN units AS lb_units ON units.last_ball_unit=lb_units.unit \n\
@@ -999,39 +999,39 @@ function validateMessage(conn, objMessage, message_index, objUnit, objValidation
 			return callback("you don't need spend proofs when you have inline payload");
 	}
 
-	if (objMessage.payload_location !== "inline" && objMessage.payload_location !== "uri" && objMessage.payload_location !== "none")
-		return callback("wrong payload location: "+objMessage.payload_location);
+  if (objMessage.payload_location !== "inline" && objMessage.payload_location !== "uri" && objMessage.payload_location !== "none")
+    return callback("wrong payload location: "+objMessage.payload_location);
 
-	if (objMessage.payload_location === "none" && ("payload" in objMessage || "payload_uri" in objMessage || "payload_uri_hash" in objMessage))
-		return callback("must be no payload");
+  if (objMessage.payload_location === "none" && ("payload" in objMessage || "payload_uri" in objMessage || "payload_uri_hash" in objMessage))
+    return callback("must be no payload");
 
-	if (objMessage.payload_location === "uri"){
-		if ("payload" in objMessage)
-			return callback("must not contain payload");
-		if (typeof objMessage.payload_uri !== "string")
-			return callback("no payload uri");
-		if (!isStringOfLength(objMessage.payload_uri_hash, constants.HASH_LENGTH))
-			return callback("wrong length of payload uri hash");
-		if (objMessage.payload_uri.length > 500)
-			return callback("payload_uri too long");
-		if (objectHash.getBase64Hash(objMessage.payload_uri) !== objMessage.payload_uri_hash)
-			return callback("wrong payload_uri hash");
-	}
-	else{
-		if ("payload_uri" in objMessage || "payload_uri_hash" in objMessage)
-			return callback("must not contain payload_uri and payload_uri_hash");
-	}
-	
-	if (objMessage.app === "payment"){ // special requirements for payment
-		if (objMessage.payload_location !== "inline" && objMessage.payload_location !== "none")
-			return callback("payment location must be inline or none");
-		if (objMessage.payload_location === "none" && !objMessage.spend_proofs)
-			return callback("private payment must come with spend proof(s)");
-	}
-	
-	var arrInlineOnlyApps = ["address_definition_change", "data_feed", "definition_template", "asset_attestors", "attestation", "poll", "vote"];
-	if (arrInlineOnlyApps.indexOf(objMessage.app) >= 0 && objMessage.payload_location !== "inline")
-		return callback(objMessage.app+" must be inline");
+  if (objMessage.payload_location === "uri"){
+    if ("payload" in objMessage)
+      return callback("must not contain payload");
+    if (typeof objMessage.payload_uri !== "string")
+      return callback("no payload uri");
+    if (!isStringOfLength(objMessage.payload_uri_hash, constants.HASH_LENGTH))
+      return callback("wrong length of payload uri hash");
+    if (objMessage.payload_uri.length > 500)
+      return callback("payload_uri too long");
+    if (objectHash.getBase64Hash(objMessage.payload_uri) !== objMessage.payload_uri_hash)
+      return callback("wrong payload_uri hash");
+  }
+  else{
+    if ("payload_uri" in objMessage || "payload_uri_hash" in objMessage)
+      return callback("must not contain payload_uri and payload_uri_hash");
+  }
+
+  if (objMessage.app === "payment"){ // special requirements for payment
+    if (objMessage.payload_location !== "inline" && objMessage.payload_location !== "none")
+      return callback("payment location must be inline or none");
+    if (objMessage.payload_location === "none" && !objMessage.spend_proofs)
+      return callback("private payment must come with spend proof(s)");
+  }
+
+  var arrInlineOnlyApps = ["address_definition_change", "data_feed", "definition_template", "asset", "asset_attestors", "attestation", "poll", "vote"];
+  if (arrInlineOnlyApps.indexOf(objMessage.app) >= 0 && objMessage.payload_location !== "inline")
+    return callback(objMessage.app+" must be inline");
 
 	
 	function validatePayload(cb){
@@ -1117,7 +1117,7 @@ function validateInlinePayload(conn, objMessage, message_index, objUnit, objVali
 	if (objectHash.getBase64Hash(payload) !== objMessage.payload_hash)
 		return callback("wrong payload hash: expected "+objectHash.getBase64Hash(payload)+", got "+objMessage.payload_hash);
 
-	switch (objMessage.app){
+  switch (objMessage.app){
 
 		case "text":
 			if (typeof payload !== "string")
@@ -1250,92 +1250,99 @@ function validateInlinePayload(conn, objMessage, message_index, objUnit, objVali
 			// it is also ok to attest oneself
 			return callback();
 
-		case "asset_attestors":
-			if (!objValidationState.assocHasAssetAttestors)
-				objValidationState.assocHasAssetAttestors = {};
-			if (objValidationState.assocHasAssetAttestors[payload.asset])
-				return callback("can be only one asset attestor list update per asset");
-			objValidationState.assocHasAssetAttestors[payload.asset] = true;
-			validateAssetorListUpdate(conn, payload, objUnit, objValidationState, callback);
-			break;
+    case "asset":
+      if (objValidationState.bHasAssetDefinition)
+        return callback("can be only one asset definition");
+      objValidationState.bHasAssetDefinition = true;
+      validateAssetDefinition(conn, payload, objUnit, objValidationState, callback);
+      break;
 
-		case "payment":
-			validatePayment(conn, payload, message_index, objUnit, objValidationState, callback);
-			break;
+    case "asset_attestors":
+      if (!objValidationState.assocHasAssetAttestors)
+        objValidationState.assocHasAssetAttestors = {};
+      if (objValidationState.assocHasAssetAttestors[payload.asset])
+        return callback("can be only one asset attestor list update per asset");
+      objValidationState.assocHasAssetAttestors[payload.asset] = true;
+      validateAssetorListUpdate(conn, payload, objUnit, objValidationState, callback);
+      break;
 
-		default:
-			return callback("unknown app: "+objMessage.app);
-	}
+    case "payment":
+      validatePayment(conn, payload, message_index, objUnit, objValidationState, callback);
+      break;
+
+    default:
+      return callback("unknown app: "+objMessage.app);
+  }
 }
 
 // used for both public and private payments
 function validatePayment(conn, payload, message_index, objUnit, objValidationState, callback){
 
-	if (!("asset" in payload)){ // base currency
-		if (hasFieldsExcept(payload, ["inputs", "outputs"]))
-			return callback("unknown fields in payment message");
-		if (objValidationState.bHasBasePayment)
-			return callback("can have only one base payment");
-		objValidationState.bHasBasePayment = true;
-		return validatePaymentInputsAndOutputs(conn, payload, null, message_index, objUnit, objValidationState, callback);
-	}
-	
-	// asset
-	if (!isStringOfLength(payload.asset, constants.HASH_LENGTH))
-		return callback("invalid asset");
-	
-	var arrAuthorAddresses = objUnit.authors.map(function(author) { return author.address; } );
-	// note that light clients cannot check attestations
-	storage.loadAssetWithListOfAttestedAuthors(conn, payload.asset, objValidationState.last_ball_mci, arrAuthorAddresses, function(err, objAsset){
-		if (err)
-			return callback(err);
-		if (hasFieldsExcept(payload, ["inputs", "outputs", "denomination"]))
-			return callback("unknown fields in payment message");
-		if (!isNonemptyArray(payload.inputs))
-			return callback("no inputs");
-		if (!isNonemptyArray(payload.outputs))
-			return callback("no outputs");
-		if (objAsset.fixed_denominations){
-			if (!isPositiveInteger(payload.denomination))
-				return callback("no denomination");
-		}
-		else{
-			if ("denomination" in payload)
-				return callback("denomination in arbitrary-amounts asset")
-		}
-		if (!!objAsset.is_private !== !!objValidationState.bPrivate)
-			return callback("asset privacy mismatch");
-		var bIssue = (payload.inputs[0].type === "issue");
-		var issuer_address;
-		if (bIssue){
-			if (arrAuthorAddresses.length === 1)
-				issuer_address = arrAuthorAddresses[0];
-			else{
-				issuer_address = payload.inputs[0].address;
-				if (arrAuthorAddresses.indexOf(issuer_address) === -1)
-					return callback("issuer not among authors");
-			}
-			if (objAsset.issued_by_definer_only && issuer_address !== objAsset.definer_address)
-				return callback("only definer can issue this asset");
-		}
-		if (objAsset.cosigned_by_definer && arrAuthorAddresses.indexOf(objAsset.definer_address) === -1)
-			return callback("must be cosigned by definer");
-		
-		if (objAsset.spender_attested){
-			if (conf.bLight && objAsset.is_private) // in light clients, we don't have the attestation data but if the asset is public, we trust witnesses to have checked attestations
-				return callback("being light, I can't check attestations for private assets"); // TODO: request history
-			if (objAsset.arrAttestedAddresses.length === 0)
-				return callback("none of the authors is attested");
-			if (bIssue && objAsset.arrAttestedAddresses.indexOf(issuer_address) === -1)
-				return callback("issuer is not attested");
-		}
-		validatePaymentInputsAndOutputs(conn, payload, objAsset, message_index, objUnit, objValidationState, callback);
-	});
+  if (!("asset" in payload)){ // base currency
+    if (hasFieldsExcept(payload, ["inputs", "outputs"]))
+      return callback("unknown fields in payment message");
+    if (objValidationState.bHasBasePayment)
+      return callback("can have only one base payment");
+    objValidationState.bHasBasePayment = true;
+    return validatePaymentInputsAndOutputs(conn, payload, null, message_index, objUnit, objValidationState, callback);
+  }
+
+  // asset
+  if (!isStringOfLength(payload.asset, constants.HASH_LENGTH))
+    return callback("invalid asset");
+
+  var arrAuthorAddresses = objUnit.authors.map(function(author) { return author.address; } );
+  // note that light clients cannot check attestations
+  storage.loadAssetWithListOfAttestedAuthors(conn, payload.asset, objValidationState.last_ball_mci, arrAuthorAddresses, function(err, objAsset){
+    if (err)
+      return callback(err);
+    if (hasFieldsExcept(payload, ["inputs", "outputs", "asset", "denomination"]))
+      return callback("unknown fields in payment message");
+    if (!isNonemptyArray(payload.inputs))
+      return callback("no inputs");
+    if (!isNonemptyArray(payload.outputs))
+      return callback("no outputs");
+    if (objAsset.fixed_denominations){
+      if (!isPositiveInteger(payload.denomination))
+        return callback("no denomination");
+    }
+    else{
+      if ("denomination" in payload)
+        return callback("denomination in arbitrary-amounts asset")
+    }
+    if (!!objAsset.is_private !== !!objValidationState.bPrivate)
+      return callback("asset privacy mismatch");
+    var bIssue = (payload.inputs[0].type === "issue");
+    var issuer_address;
+    if (bIssue){
+      if (arrAuthorAddresses.length === 1)
+        issuer_address = arrAuthorAddresses[0];
+      else{
+        issuer_address = payload.inputs[0].address;
+        if (arrAuthorAddresses.indexOf(issuer_address) === -1)
+          return callback("issuer not among authors");
+      }
+      if (objAsset.issued_by_definer_only && issuer_address !== objAsset.definer_address)
+        return callback("only definer can issue this asset");
+    }
+    if (objAsset.cosigned_by_definer && arrAuthorAddresses.indexOf(objAsset.definer_address) === -1)
+      return callback("must be cosigned by definer");
+
+    if (objAsset.spender_attested){
+      if (conf.bLight && objAsset.is_private) // in light clients, we don't have the attestation data but if the asset is public, we trust witnesses to have checked attestations
+        return callback("being light, I can't check attestations for private assets"); // TODO: request history
+      if (objAsset.arrAttestedAddresses.length === 0)
+        return callback("none of the authors is attested");
+      if (bIssue && objAsset.arrAttestedAddresses.indexOf(issuer_address) === -1)
+        return callback("issuer is not attested");
+    }
+    validatePaymentInputsAndOutputs(conn, payload, objAsset, message_index, objUnit, objValidationState, callback);
+  });
 }
 
 // divisible assets (including base asset)
 function validatePaymentInputsAndOutputs(conn, payload, objAsset, message_index, objUnit, objValidationState, callback){
-	
+
 //	if (objAsset)
 //		profiler2.start();
 	var denomination = payload.denomination || 1;

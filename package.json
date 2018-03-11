@@ -1,10 +1,10 @@
 {
-  "name": "byteballcore",
-  "description": "Byteball Core",
-  "author": "Byteball",
-  "version": "0.2.86",
+  "name": "core",
+  "description": "Dagcoin Core",
+  "author": "Dagcoin",
+  "version": "0.1.0",
   "keywords": [
-    "byteball",
+    "dagcoin",
     "multisignature"
   ],
   "homepage": "https://github.com/dagcoin/core",
