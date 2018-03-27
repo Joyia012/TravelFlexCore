@@ -10,6 +10,8 @@ exports.COUNT_MC_BALLS_FOR_PAID_WITNESSING = 100;
 exports.version = '1.0t';
 exports.alt = '1';
 
+
+//TODO: Generate live
 exports.GENESIS_UNIT = (exports.alt === '1' && exports.version === '1.0t') ? 'm8aIKxPKI77tjkpAmGB0hqhtZXaPcD5+04VnY2OAcEM=' : 'tbd';
 exports.BLACKBYTES_ASSET = (exports.alt === '1' && exports.version === '1.0t') ? 'm8aIKxPKI77tjkpAmGB0hqhtZXaPcD5+04VnY2OAcEM=' : 'tbd';
 
