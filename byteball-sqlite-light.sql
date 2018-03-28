@@ -308,7 +308,7 @@ CREATE TABLE outputs (
 );
 CREATE INDEX dobyAddressSpent ON outputs(address, is_spent);
 CREATE INDEX outputsIndexByAsset ON outputs(asset);
-
+CREATE INDEX outputsIsSerial ON outputs(is_serial);
 
 -- ------------
 -- Commissions
