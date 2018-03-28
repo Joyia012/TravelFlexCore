@@ -766,4 +766,4 @@ CREATE TABLE original_addresses (
 );
 
 
-PRAGMA user_version=18;
+PRAGMA user_version=19;
