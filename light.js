@@ -302,9 +302,11 @@ function processHistory(objResponse, callbacks){
 					return callbacks.ifError("wrong ball hash: unit "+objBall.unit+", ball "+objBall.ball);
 				if (!assocKnownBalls[objBall.ball])
 					return callbacks.ifError("ball not known: "+objBall.ball);
-				objBall.parent_balls.forEach(function(parent_ball){
-					assocKnownBalls[parent_ball] = true;
-				});
+				if (objBall.parent_balls != null) {
+                    objBall.parent_balls.forEach(function (parent_ball) {
+                        assocKnownBalls[parent_ball] = true;
+                    });
+                }
 				if (objBall.skiplist_balls)
 					objBall.skiplist_balls.forEach(function(skiplist_ball){
 						assocKnownBalls[skiplist_ball] = true;
