@@ -34,9 +34,14 @@
     "ws": "^1.0.1"
   },
   "scripts": {
+    "pretest": "npm run eslint",
+    "eslint": "./node_modules/eslint/bin/eslint.js --cache ./src",
     "test": "ava"
   },
   "devDependencies": {
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-import": "^2.5.0",
     "ava": "^1.0.0-beta.1",
     "ava-config": "^1.1.0",
     "testcheck": "^1.0.0-rc.2"
