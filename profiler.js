@@ -57,7 +57,7 @@ function print() {
 
 function print_results() {
     console.log('\nBenchmarking results:');
-    for (const tag in timers_results) {
+    for (let tag in timers_results) {
         const results = timers_results[tag];
         let sum = 0,
 max = 0,

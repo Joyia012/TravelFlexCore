@@ -5,7 +5,7 @@
 require('./enforce_singleton.js');
 
 function mergeExports(anotherModule) {
-    for (const key in anotherModule) { exports[key] = anotherModule[key]; }
+    for (let key in anotherModule) { exports[key] = anotherModule[key]; }
 }
 
 // port we are listening on.  Set to null to disable accepting connections

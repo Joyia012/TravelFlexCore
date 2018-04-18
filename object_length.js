@@ -21,7 +21,7 @@ value.forEach((element) => {
                     len += getLength(element);
                 });
 } else {
-for (const key in value) {
+for (let key in value) {
                     if (typeof value[key] === 'undefined') { throw Error(`undefined at ${key} of ${JSON.stringify(value)}`); }
                     len += getLength(value[key]);
                 }

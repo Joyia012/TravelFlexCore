@@ -608,7 +608,7 @@ function composeJoint(params) {
                 if (err) { return cb((typeof err === 'string') ? (`unable to add additional messages: ${err}`) : err); }
                 Array.prototype.push.apply(objUnit.messages, arrMoreMessages);
                 if (assocMorePrivatePayloads && Object.keys(assocMorePrivatePayloads).length > 0) {
- for (const payload_hash in assocMorePrivatePayloads) { assocPrivatePayloads[payload_hash] = assocMorePrivatePayloads[payload_hash]; }
+ for (let payload_hash in assocMorePrivatePayloads) { assocPrivatePayloads[payload_hash] = assocMorePrivatePayloads[payload_hash]; }
 }
                 cb();
             });

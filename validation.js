@@ -557,7 +557,7 @@ function validateAuthor(conn, objAuthor, objUnit, objValidationState, callback) 
     if (!isStringOfLength(objAuthor.address, 32)) { return callback('wrong address length'); }
     if (hasFieldsExcept(objAuthor, ['address', 'authentifiers', 'definition'])) { return callback('unknown fields in author'); }
     if (!ValidationUtils.isNonemptyObject(objAuthor.authentifiers) && !objUnit.content_hash) { return callback('no authentifiers'); }
-    for (const path in objAuthor.authentifiers) {
+    for (let path in objAuthor.authentifiers) {
         if (!isNonemptyString(objAuthor.authentifiers[path])) { return callback('authentifiers must be nonempty strings'); }
         if (objAuthor.authentifiers[path].length > constants.MAX_AUTHENTIFIER_LENGTH) { return callback('authentifier too long'); }
     }
@@ -1002,7 +1002,7 @@ function validateInlinePayload(conn, objMessage, message_index, objUnit, objVali
             if (objValidationState.bHasDataFeed) { return callback('can be only one data feed'); }
             objValidationState.bHasDataFeed = true;
             if (typeof payload !== 'object' || Array.isArray(payload) || Object.keys(payload).length === 0) { return callback('data feed payload must be non-empty object'); }
-            for (const feed_name in payload) {
+            for (let feed_name in payload) {
                 if (feed_name.length > constants.MAX_DATA_FEED_NAME_LENGTH) { return callback(`feed name ${feed_name} too long`); }
                 const value = payload[feed_name];
                 if (typeof value === 'string') {

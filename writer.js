@@ -2,7 +2,7 @@
 
 'use strict';
 
-const _ = require('lodash');
+// const _ = require('lodash');
 const async = require('async');
 const constants = require('./constants.js');
 const conf = require('./conf.js');
@@ -102,7 +102,7 @@ conn.addQuery(arrQueries,
         [objUnit.unit, author.address, definition_chash]);
       if (bGenesis) { conn.addQuery(arrQueries, 'UPDATE unit_authors SET _mci=0 WHERE unit=?', [objUnit.unit]); }
       if (!objUnit.content_hash) {
-        for (const path in author.authentifiers) {
+        for (let path in author.authentifiers) {
  conn.addQuery(arrQueries, 'INSERT INTO authentifiers (unit, address, path, authentifier) VALUES(?,?,?,?)',
             [objUnit.unit, author.address, path, author.authentifiers[path]]);
 }
@@ -147,7 +147,7 @@ conn.addQuery(arrQueries, 'INSERT INTO poll_choices (unit, choice_index, choice)
               var attestation = message.payload;
               conn.addQuery(arrQueries, 'INSERT INTO attestations (unit, message_index, attestor_address, address) VALUES(?,?,?,?)',
                 [objUnit.unit, i, objUnit.authors[0].address, attestation.address]);
-              for (const field in attestation.profile) {
+              for (let field in attestation.profile) {
                   var value = attestation.profile[field];
                   if (field.length <= constants.MAX_PROFILE_FIELD_LENGTH && typeof value === 'string' && value.length <= constants.MAX_PROFILE_VALUE_LENGTH) {
  conn.addQuery(arrQueries,
@@ -192,7 +192,7 @@ conn.addQuery(arrQueries, 'INSERT INTO poll_choices (unit, choice_index, choice)
               break;
             case 'data_feed':
               var data = message.payload;
-              for (const feed_name in data) {
+              for (let feed_name in data) {
                 var value = data[feed_name];
                 const field_name = (typeof value === 'string') ? '`value`' : 'int_value';
                 conn.addQuery(arrQueries, `INSERT INTO data_feeds (unit, message_index, feed_name, ${field_name}) VALUES(?,?,?,?)`,

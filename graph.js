@@ -3,7 +3,7 @@
 'use strict';
 
 const _ = require('lodash');
-const async = require('async');
+// const async = require('async');
 const storage = require('./storage.js');
 const db = require('./db.js');
 const profiler = require('./profiler.js');

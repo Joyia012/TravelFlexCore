@@ -181,7 +181,7 @@ function migrateDb(connection, onDone) {
                             rows.forEach((row) => {
                                 const attestation = JSON.parse(row.payload);
                                 if (attestation.address !== row.address) { throw Error('attestation.address !== row.address'); }
-                                for (const field in attestation.profile) {
+                                for (let field in attestation.profile) {
                                     const value = attestation.profile[field];
                                     if (field.length <= constants.MAX_PROFILE_FIELD_LENGTH && typeof value === 'string' && value.length <= constants.MAX_PROFILE_VALUE_LENGTH) {
                                         connection.addQuery(arrQueries,

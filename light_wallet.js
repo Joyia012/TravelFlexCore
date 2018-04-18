@@ -55,9 +55,10 @@ function prepareRequestForHistory(handleResult) {
                 objHistoryRequest.last_stable_mci = 0;
                 const strAddressList = arrAddresses.map(db.escape).join(', ');
                 db.query(
-                    `SELECT unit FROM unit_authors JOIN units USING(unit) WHERE is_stable=1 AND address IN(${strAddressList}) \n\
+                    `SELECT unit FROM unit_authors JOIN units USING(unit) WHERE is_stable=1 AND address IN(?) \n\
                     UNION \n\
-                    SELECT unit FROM outputs JOIN units USING(unit) WHERE is_stable=1 AND address IN(${strAddressList})`,
+                    SELECT unit FROM outputs JOIN units USING(unit) WHERE is_stable=1 AND address IN(?)`,
+                    [strAddressList],
                     (rows) => {
                         if (rows.length) { objHistoryRequest.known_stable_units = rows.map(row => row.unit); }
                         handleResult(objHistoryRequest);
@@ -126,7 +127,7 @@ function refreshLightClientHistory() {
 }
 
 function archiveDoublespendUnits() {
-    db.query(`SELECT unit FROM units WHERE is_stable=0 AND is_free=1 AND creation_date<${db.addTime('-1 DAY')}`, (rows) => {
+    db.query(`SELECT unit FROM units WHERE is_stable=0 AND is_free=1 AND creation_date<${db.addTime('-1 DAY')}`,(rows) => {
         const arrUnits = rows.map(row => row.unit);
         breadcrumbs.add(`units still unstable after 1 day: ${arrUnits.join(', ')}`);
         arrUnits.forEach((unit) => {

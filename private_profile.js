@@ -41,7 +41,7 @@ function parseAndValidatePrivateProfile(objPrivateProfile, onDone) {
     if (!payload) { return onDone('no such payload hash in this unit'); }
     const hidden_profile = {};
     let bHasHiddenFields = false;
-    for (const field in objPrivateProfile.src_profile) {
+    for (let field in objPrivateProfile.src_profile) {
       const value = objPrivateProfile.src_profile[field];
       // the value of each field is either array [plain_text_value, blinding] (if the field is disclosed) or a hash (if it is not disclosed)
       if (ValidationUtils.isArrayOfLength(value, 2)) { hidden_profile[field] = objectHash.getBase64Hash(value); } else if (ValidationUtils.isStringOfLength(value, constants.HASH_LENGTH)) {
@@ -76,7 +76,7 @@ function parseAndValidatePrivateProfile(objPrivateProfile, onDone) {
 // removes blinding and returns object {first_name: "First", last_name: "Last", ...}
 function parseSrcProfile(src_profile) {
   const assocPrivateData = {};
-  for (const field in src_profile) {
+  for (let field in src_profile) {
     const arrValueAndBlinding = src_profile[field];
     if (ValidationUtils.isArrayOfLength(arrValueAndBlinding, 2)) // otherwise it is a hash, meaning that the field was not disclosed
       { assocPrivateData[field] = arrValueAndBlinding[0]; }
@@ -93,7 +93,7 @@ function savePrivateProfile(objPrivateProfile, address, attestor_address, onDone
       const private_profile_id = res.insertId;
       if (!private_profile_id) { throw Error(`no insert id after inserting private profile ${JSON.stringify(objPrivateProfile)}`); }
       const arrQueries = [];
-      for (const field in objPrivateProfile.src_profile) {
+      for (let field in objPrivateProfile.src_profile) {
         const arrValueAndBlinding = objPrivateProfile.src_profile[field];
         db.addQuery(arrQueries, 'INSERT INTO private_profile_fields (private_profile_id, field, value, blinding) VALUES(?,?,?,?)',
           [private_profile_id, field, arrValueAndBlinding[0], arrValueAndBlinding[1]]);

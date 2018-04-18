@@ -219,7 +219,7 @@ function validateDefinition(conn, arrDefinition, objUnit, objValidationState, ar
                 var params = args[1];
                 if (!isStringOfLength(unit, constants.HASH_LENGTH)) { return cb('unit must be 44 bytes long'); }
                 if (!ValidationUtils.isNonemptyObject(params)) { return cb('params must be non-empty object'); }
-                for (const key in params) {
+                for (let key in params) {
 if (typeof params[key] !== 'string' && typeof params[key] !== 'number') { return cb('each param must be string or number'); }
 }
                 conn.query(
@@ -965,7 +965,7 @@ function replaceInTemplate(arrTemplate, params) {
                 if (Array.isArray(x)) {
 for (let i = 0; i < x.length; i++) { x[i] = replaceInVar(x[i]); }
 } else {
- for (const key in x) { x[key] = replaceInVar(x[key]); }
+ for (let key in x) { x[key] = replaceInVar(x[key]); }
 }
                 return x;
             default:

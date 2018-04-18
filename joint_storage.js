@@ -229,7 +229,7 @@ function purgeUncoveredNonserialJoints(bByExistenceOfChildren, onDone) {
                         if (!storage.assocUnstableUnits[parent_unit]) // the parent is already stable
                           { return; }
                         let bHasChildren = false;
-                        for (const unit in storage.assocUnstableUnits) {
+                        for (let unit in storage.assocUnstableUnits) {
                           const o = storage.assocUnstableUnits[unit];
                           if (o.parent_units.indexOf(parent_unit) >= 0) { bHasChildren = true; }
                         }

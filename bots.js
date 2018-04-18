@@ -10,7 +10,7 @@ const async = require('async');
 let bots_cache = [];
 
 function getBotByID(id, cb) {
-    for (const i in bots_cache) {
+    for (let i in bots_cache) {
         const bot = bots_cache[i];
         if (bot.id == id) {
             return setPairingStatus(bot, cb);

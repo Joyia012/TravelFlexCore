@@ -133,7 +133,7 @@ function approvePendingSharedAddress(address_definition_template_chash, from_add
                                     const assocSignersByPath = {};
                                     rows.forEach((row) => {
                                         const assocDeviceAddressesByRelativeSigningPaths = JSON.parse(row.device_addresses_by_relative_signing_paths);
-                                        for (const member_signing_path in assocDeviceAddressesByRelativeSigningPaths) {
+                                        for (let member_signing_path in assocDeviceAddressesByRelativeSigningPaths) {
                                             const signing_device_address = assocDeviceAddressesByRelativeSigningPaths[member_signing_path];
                                             // this is full signing path, from root of shared address (not from root of member address)
                                             const full_signing_path = row.signing_path + member_signing_path.substring(1);
@@ -188,7 +188,7 @@ function addNewSharedAddress(address, arrDefinition, assocSignersByPath, bForwar
         [address, JSON.stringify(arrDefinition)],
         () => {
             const arrQueries = [];
-            for (const signing_path in assocSignersByPath) {
+            for (let signing_path in assocSignersByPath) {
                 const signerInfo = assocSignersByPath[signing_path];
                 db.addQuery(arrQueries,
                     `INSERT ${db.getIgnore()} INTO shared_address_signing_paths \n\
@@ -207,7 +207,7 @@ function addNewSharedAddress(address, arrDefinition, assocSignersByPath, bForwar
 }
 
 function includesMyDeviceAddress(assocSignersByPath) {
-    for (const signing_path in assocSignersByPath) {
+    for (let signing_path in assocSignersByPath) {
         const signerInfo = assocSignersByPath[signing_path];
         if (signerInfo.device_address === device.getMyDeviceAddress()) { return true; }
     }
@@ -219,7 +219,7 @@ function includesMyDeviceAddress(assocSignersByPath) {
 function determineIfIncludesMeAndRewriteDeviceAddress(assocSignersByPath, handleResult) {
     const assocMemberAddresses = {};
     let bHasMyDeviceAddress = false;
-    for (const signing_path in assocSignersByPath) {
+    for (let signing_path in assocSignersByPath) {
         const signerInfo = assocSignersByPath[signing_path];
         if (signerInfo.device_address === device.getMyDeviceAddress()) { bHasMyDeviceAddress = true; }
         if (signerInfo.address) { assocMemberAddresses[signerInfo.address] = true; }
@@ -237,7 +237,7 @@ function determineIfIncludesMeAndRewriteDeviceAddress(assocSignersByPath, handle
             const arrMyMemberAddresses = rows.filter(row => (row.type === 'my')).map(row => row.address);
             // rewrite device address for my addresses
             if (!bHasMyDeviceAddress) {
-                for (const signing_path in assocSignersByPath) {
+                for (let signing_path in assocSignersByPath) {
                     const signerInfo = assocSignersByPath[signing_path];
                     if (signerInfo.address && arrMyMemberAddresses.indexOf(signerInfo.address) >= 0) { signerInfo.device_address = device.getMyDeviceAddress(); }
                 }
@@ -249,7 +249,7 @@ function determineIfIncludesMeAndRewriteDeviceAddress(assocSignersByPath, handle
 
 function forwardNewSharedAddressToCosignersOfMyMemberAddresses(address, arrDefinition, assocSignersByPath) {
     const assocMyMemberAddresses = {};
-    for (const signing_path in assocSignersByPath) {
+    for (let signing_path in assocSignersByPath) {
         const signerInfo = assocSignersByPath[signing_path];
         if (signerInfo.device_address === device.getMyDeviceAddress() && signerInfo.address) { assocMyMemberAddresses[signerInfo.address] = true; }
     }
@@ -271,7 +271,7 @@ function handleNewSharedAddress(body, callbacks) {
     if (!ValidationUtils.isArrayOfLength(body.definition, 2)) { return callbacks.ifError('invalid definition'); }
     if (typeof body.signers !== 'object' || Object.keys(body.signers).length === 0) { return callbacks.ifError('invalid signers'); }
     if (body.address !== objectHash.getChash160(body.definition)) { return callbacks.ifError("definition doesn't match its c-hash"); }
-    for (const signing_path in body.signers) {
+    for (let signing_path in body.signers) {
         const signerInfo = body.signers[signing_path];
         if (signerInfo.address && !ValidationUtils.isValidAddress(signerInfo.address)) { return callbacks.ifError(`invalid member address: ${signerInfo.address}`); }
     }
@@ -292,7 +292,7 @@ function createNewSharedAddress(arrDefinition, assocSignersByPath, callbacks) {
         ifOk() {
             // share the new address with all cosigners
             const arrDeviceAddresses = [];
-            for (const signing_path in assocSignersByPath) {
+            for (let signing_path in assocSignersByPath) {
                 const signerInfo = assocSignersByPath[signing_path];
                 if (signerInfo.device_address !== device.getMyDeviceAddress() && arrDeviceAddresses.indexOf(signerInfo.device_address) === -1) { arrDeviceAddresses.push(signerInfo.device_address); }
             }
@@ -468,7 +468,7 @@ function readSharedAddressPeerAddresses(shared_address, handlePeerAddresses) {
 
 function getPeerAddressesFromSigners(assocSignersByPath) {
     const assocPeerAddresses = {};
-    for (const path in assocSignersByPath) {
+    for (let path in assocSignersByPath) {
         const signerInfo = assocSignersByPath[path];
         if (signerInfo.device_address !== device.getMyDeviceAddress()) { assocPeerAddresses[signerInfo.address] = true; }
     }

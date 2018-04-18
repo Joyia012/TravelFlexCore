@@ -92,7 +92,7 @@ function calcHeadersCommissions(conn, onDone) {
                             assocChildrenInfos[payer_unit].children.push(row);
                         });
                         const assocWonAmounts = {}; // amounts won, indexed by child unit who won the hc, and payer unit
-                        for (const payer_unit in assocChildrenInfos) {
+                        for (let payer_unit in assocChildrenInfos) {
                             const headers_commission = assocChildrenInfos[payer_unit].headers_commission;
                             const winnerChildInfo = getWinnerInfo(assocChildrenInfos[payer_unit].children);
                             const child_unit = winnerChildInfo.child_unit;
@@ -122,7 +122,7 @@ function calcHeadersCommissions(conn, onDone) {
                                 const arrValues = [];
                                 profit_distribution_rows.forEach((row) => {
                                     const child_unit = row.unit;
-                                    for (const payer_unit in assocWonAmounts[child_unit]) {
+                                    for (let payer_unit in assocWonAmounts[child_unit]) {
                                         const full_amount = assocWonAmounts[child_unit][payer_unit];
                                         if (!full_amount) { throw Error(`no amount for child unit ${child_unit}, payer unit ${payer_unit}`); }
                                         // note that we round _before_ summing up header commissions won from several parent units

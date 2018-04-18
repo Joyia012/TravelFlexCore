@@ -262,7 +262,7 @@ function handleMessageFromHub(ws, json, device_pubkey, bIndirectCorrespondent, c
       // hence the hashes of such unsigned units are also identical
       objUnit.authors.forEach((author) => {
         const authentifiers = author.authentifiers;
-        for (const path in authentifiers) { authentifiers[path] = authentifiers[path].replace(/./, '-'); }
+        for (let path in authentifiers) { authentifiers[path] = authentifiers[path].replace(/./, '-'); }
       });
       var assocPrivatePayloads = body.private_payloads;
       if ('private_payloads' in body) {
@@ -363,7 +363,7 @@ ifError() {
       var assocValidatedByKey = {};
       var bParsingComplete = false;
       var cancelAllKeys = function () {
-        for (const key in assocValidatedByKey) { eventBus.removeAllListeners(key); }
+        for (let key in assocValidatedByKey) { eventBus.removeAllListeners(key); }
       };
 
       var current_message_counter = ++message_counter;
@@ -371,7 +371,7 @@ ifError() {
       var checkIfAllValidated = function () {
         if (!assocValidatedByKey) // duplicate call - ignore
           { return console.log('duplicate call of checkIfAllValidated'); }
-        for (const key in assocValidatedByKey) {
+        for (let key in assocValidatedByKey) {
 if (!assocValidatedByKey[key]) { return console.log('not all private payments validated yet'); }
 }
         assocValidatedByKey = null; // to avoid duplicate calls
@@ -554,7 +554,7 @@ function emitNewPrivatePaymentReceived(payer_device_address, arrChains, message_
     if (arrMyReceivingAddresses.length === 0) { return; }
     db.query('SELECT 1 FROM shared_addresses WHERE shared_address IN(?)', [arrMyReceivingAddresses], (rows) => {
       const bToSharedAddress = (rows.length > 0);
-      for (const asset in assocAmountsByAsset) {
+      for (let asset in assocAmountsByAsset) {
  if (assocAmountsByAsset[asset]) { eventBus.emit('received_payment', payer_device_address, assocAmountsByAsset[asset], asset, message_counter, bToSharedAddress); }
 }
     });
@@ -581,7 +581,7 @@ function emitNewPublicPaymentReceived(payer_device_address, objUnit, message_cou
     if (arrMyReceivingAddresses.length === 0) { return; }
     db.query('SELECT 1 FROM shared_addresses WHERE shared_address IN(?)', [arrMyReceivingAddresses], (rows) => {
       const bToSharedAddress = (rows.length > 0);
-      for (const asset in assocAmountsByAsset) {
+      for (let asset in assocAmountsByAsset) {
  if (assocAmountsByAsset[asset]) { eventBus.emit('received_payment', payer_device_address, assocAmountsByAsset[asset], asset, message_counter, bToSharedAddress); }
 }
     });
@@ -1174,7 +1174,7 @@ estimated_amount = asset_outputs.reduce((acc, output) => acc + output.amount, 0)
         readSigningPaths(conn, address, handleLengthsBySigningPaths) { // returns assoc array signing_path => length
           readFullSigningPaths(conn, address, arrSigningDeviceAddresses, (assocTypesBySigningPaths) => {
             const assocLengthsBySigningPaths = {};
-            for (const signing_path in assocTypesBySigningPaths) {
+            for (let signing_path in assocTypesBySigningPaths) {
               const type = assocTypesBySigningPaths[signing_path];
               if (type === 'key') { assocLengthsBySigningPaths[signing_path] = constants.SIG_LENGTH; } else if (type === 'merkle') {
                 if (merkle_proof) { assocLengthsBySigningPaths[signing_path] = merkle_proof.length; }
@@ -1281,7 +1281,7 @@ estimated_amount = asset_outputs.reduce((acc, output) => acc + output.amount, 0)
           preCommitCb(conn, objJoint, cb) {
             let i = 0;
             if (Object.keys(assocMnemonics).length) {
-              for (const to in assocMnemonics) {
+              for (let to in assocMnemonics) {
                 conn.query('INSERT INTO sent_mnemonics (unit, address, mnemonic, textAddress) VALUES (?, ?, ?, ?)', [objJoint.unit.unit, assocAddresses[to], assocMnemonics[to], to.slice(prefix.length)],
                   () => {
                     if (++i == Object.keys(assocMnemonics).length) { // stored all mnemonics
@@ -1300,7 +1300,7 @@ estimated_amount = asset_outputs.reduce((acc, output) => acc + output.amount, 0)
 
             if (Object.keys(assocPaymentsByEmail).length) { // need to send emails
               let sent = 0;
-              for (const email in assocPaymentsByEmail) {
+              for (let email in assocPaymentsByEmail) {
                 const objPayment = assocPaymentsByEmail[email];
                 sendTextcoinEmail(email, opts.email_subject, objPayment.amount, objPayment.asset, objPayment.mnemonic);
                 if (++sent == Object.keys(assocPaymentsByEmail).length) { handleResult(null, objJoint.unit.unit, assocMnemonics); }
@@ -1316,7 +1316,7 @@ estimated_amount = asset_outputs.reduce((acc, output) => acc + output.amount, 0)
       const indivisibleAssetFeesByAddress = [];
       const addFeesToParams = function (objAsset) {
         // iterate over all generated textcoin addresses
-        for (const orig_address in assocAddresses) {
+        for (let orig_address in assocAddresses) {
           var new_address = assocAddresses[orig_address];
           const _addAssetFees = function () {
             const asset_fees = objAsset && objAsset.fixed_denominations ? indivisibleAssetFeesByAddress[new_address] : constants.TEXTCOIN_ASSET_CLAIM_FEE;
@@ -1399,10 +1399,12 @@ estimated_amount = asset_outputs.reduce((acc, output) => acc + output.amount, 0)
               const old_callbacks = params.callbacks;
               params.callbacks = {
                 ifOk(objJoint, assocPrivatePayloads, unlock) {
-                  for (const orig_address in assocAddresses) {
+                  for (let orig_address in assocAddresses) {
                     var new_address = assocAddresses[orig_address];
                     const asset_messages_to_address = _.filter(objJoint.unit.messages, m => m.app === 'payment' && _.get(m, 'payload.asset') === asset && (_.get(m, 'payload.outputs[0].address') === new_address || _.get(m, 'payload.outputs[1].address') === new_address));
-                    indivisibleAssetFeesByAddress[new_address] = constants.TEXTCOIN_ASSET_CLAIM_HEADER_FEE + asset_messages_to_address.length * constants.TEXTCOIN_ASSET_CLAIM_MESSAGE_FEE + constants.TEXTCOIN_ASSET_CLAIM_BASE_MSG_FEE;
+                    indivisibleAssetFeesByAddress[new_address] = constants.TEXTCOIN_ASSET_CLAIM_HEADER_FEE +
+                    asset_messages_to_address.length *
+                    constants.TEXTCOIN_ASSET_CLAIM_MESSAGE_FEE + constants.TEXTCOIN_ASSET_CLAIM_BASE_MSG_FEE;
                   }
                   params.callbacks = old_callbacks;
                   unlock();

@@ -249,7 +249,7 @@ function processHistory(objResponse, callbacks) {
             if (err) { return callbacks.ifError(err); }
 
             let assocKnownBalls = {};
-            for (const unit in assocLastBallByLastBallUnit) {
+            for (let unit in assocLastBallByLastBallUnit) {
                 const ball = assocLastBallByLastBallUnit[unit];
                 assocKnownBalls[ball] = true;
             }

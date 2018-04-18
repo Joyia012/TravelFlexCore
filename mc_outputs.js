@@ -2,8 +2,8 @@
 
 'use strict';
 
-const _ = require('lodash');
-const async = require('async');
+// const _ = require('lodash');
+// const async = require('async');
 const db = require('./db.js');
 const conf = require('./conf.js');
 
@@ -47,7 +47,9 @@ function readNextUnspentMcIndex(conn, type, address, handleNextUnspentMcIndex){
 
 function readMaxSpendableMcIndex(conn, type, handleMaxSpendableMcIndex) {
     const table = `${type}_outputs`;
-    conn.query(`SELECT MAX(main_chain_index) AS max_mc_index FROM ${table}`, (rows) => {
+    conn.query(`SELECT MAX(main_chain_index) AS max_mc_index FROM ?`,
+        [table],
+        (rows) => {
         const max_mc_index = rows[0].max_mc_index || 0;
         handleMaxSpendableMcIndex(max_mc_index);
     });

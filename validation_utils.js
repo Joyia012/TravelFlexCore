@@ -8,7 +8,7 @@ const chash = require('./chash.js');
  * True if there is at least one field in obj that is not in arrFields.
  */
 function hasFieldsExcept(obj, arrFields) {
-    for (const field in obj) {
+    for (let field in obj) {
 if (arrFields.indexOf(field) === -1) { return true; }
 }
     return false;

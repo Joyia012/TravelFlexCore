@@ -771,7 +771,7 @@ function readBestParentAndItsWitnesses(conn, unit, handleBestParentAndItsWitness
 function markMcIndexStable(conn, mci, onDone) {
     profiler.start();
     const arrStabilizedUnits = [];
-    for (const unit in storage.assocUnstableUnits) {
+    for (let unit in storage.assocUnstableUnits) {
         const o = storage.assocUnstableUnits[unit];
         if (o.main_chain_index === mci && o.is_stable === 0) {
             o.is_stable = 1;
