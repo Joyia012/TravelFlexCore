@@ -1,7 +1,7 @@
 /*jslint node: true */
 "use strict";
 
-exports.version = '1.0t';
+exports.version = '1.0';
 exports.alt = '1';
 
 exports.COUNT_WITNESSES = (exports.alt === '1' && exports.version === '1.0t') ? 2 : 6;
