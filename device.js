@@ -166,8 +166,16 @@ function loginMessage(challenge, priv, pubkey) {
 }
 
 function sendLoginCommand(ws, challenge){
+    if (!objMyPermanentDeviceKey) {
+        console.err('objMyPermanentDeviceKey undefined or null : ' + objMyPermanentDeviceKey);
+        return;
+    }
     network.sendJustsaying(ws, 'hub/login', loginMessage(challenge, objMyPermanentDeviceKey.priv, objMyPermanentDeviceKey.pub_b64));
 	ws.bLoggedIn = true;
+    if (!objMyTempDeviceKey) {
+        console.err('objMyTempDeviceKey undefined or null : ' + objMyTempDeviceKey);
+        return;
+    }
 	sendTempPubkey(ws, objMyTempDeviceKey.pub_b64);
 	network.initWitnessesIfNecessary(ws);
 	resendStalledMessages(1);
@@ -185,6 +193,10 @@ function sendTempPubkey(ws, temp_pubkey, callbacks){
 }
 
 function createTempPubkeyPackage(temp_pubkey){
+    if (!objMyPermanentDeviceKey) {
+        console.err('objMyPermanentDeviceKey undefined or null : ' + objMyPermanentDeviceKey);
+        return;
+    }
 	var objTempPubkey = {
 		temp_pubkey: temp_pubkey,
 		pubkey: objMyPermanentDeviceKey.pub_b64
@@ -246,6 +258,10 @@ function rotateTempDeviceKey(){
 			objMyPrevTempDeviceKey = objMyTempDeviceKey;
 			objMyTempDeviceKey = objNewMyTempDeviceKey;
 			breadcrumbs.add('rotated temp device key');
+            if (!objMyTempDeviceKey) {
+                console.err('objMyTempDeviceKey undefined or null : ' + objMyTempDeviceKey);
+                return;
+            }
 			sendTempPubkey(ws, objMyTempDeviceKey.pub_b64);
 		});
 	});
@@ -280,6 +296,10 @@ function deriveSharedSecret(ecdh, peer_b64_pubkey){
 
 function decryptPackage(objEncryptedPackage){
 	var priv_key;
+    if (!objMyTempDeviceKey) {
+        console.err('objMyTempDeviceKey undefined or null : ' + objMyTempDeviceKey);
+        return;
+    }
 	if (objEncryptedPackage.dh.recipient_ephemeral_pubkey === objMyTempDeviceKey.pub_b64){
 		priv_key = objMyTempDeviceKey.priv;
 		if (objMyTempDeviceKey.use_count)
@@ -295,7 +315,7 @@ function decryptPackage(objEncryptedPackage){
 		//console.log("prev temp private key buf: ", priv_key);
 		//console.log("prev temp private key b64: "+priv_key.toString('base64'));
 	}
-	else if (objEncryptedPackage.dh.recipient_ephemeral_pubkey === objMyPermanentDeviceKey.pub_b64){
+	else if (objMyPermanentDeviceKey && objEncryptedPackage.dh.recipient_ephemeral_pubkey === objMyPermanentDeviceKey.pub_b64){
 		priv_key = objMyPermanentDeviceKey.priv;
 		console.log("message encrypted to permanent key");
 	}
@@ -468,6 +488,12 @@ function sendPreparedMessageToConnectedHub(ws, recipient_device_pubkey, message_
 			return handleError("wrong sig under temp pubkey");
 		var objEncryptedPackage = createEncryptedPackage(json, objTempPubkey.temp_pubkey);
 		var recipient_device_address = objectHash.getDeviceAddress(recipient_device_pubkey);
+
+        if (!objMyPermanentDeviceKey) {
+            console.err('objMyPermanentDeviceKey undefined or null : ' + objMyPermanentDeviceKey);
+            return;
+        }
+
 		var objDeviceMessage = {
 			encrypted_package: objEncryptedPackage,
 			to: recipient_device_address,
@@ -567,6 +593,10 @@ function sendPairingMessage(hub_host, recipient_device_pubkey, pairing_secret, r
 }
 
 function startWaitingForPairing(handlePairingInfo){
+    if (!objMyPermanentDeviceKey) {
+        console.err('objMyPermanentDeviceKey undefined or null : ' + objMyPermanentDeviceKey);
+        return;
+    }
 	var pairing_secret = crypto.randomBytes(9).toString("base64");
 	var pairingInfo = {
 		pairing_secret: pairing_secret,
