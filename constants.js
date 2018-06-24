@@ -1,10 +1,10 @@
 /*jslint node: true */
 "use strict";
 
-exports.version = '1.0';
+exports.version = '1.0t';
 exports.alt = '1';
 
-exports.COUNT_WITNESSES = (exports.alt === '1' && exports.version === '1.0t') ? 2 : 6;
+exports.COUNT_WITNESSES = (exports.alt === '1' && exports.version === '1.0t') ? 1 : 6;
 exports.MAX_WITNESS_LIST_MUTATIONS = 1;
 exports.TOTAL_WHITEBYTES = (exports.alt === '1' && exports.version === '1.0t') ? 1e15 : 9e15;
 exports.MAJORITY_OF_WITNESSES = (exports.COUNT_WITNESSES%2===0) ? (exports.COUNT_WITNESSES/2+1) : Math.ceil(exports.COUNT_WITNESSES/2);
