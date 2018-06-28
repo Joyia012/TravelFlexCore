@@ -11,7 +11,7 @@ exports.MAJORITY_OF_WITNESSES = (exports.COUNT_WITNESSES%2===0) ? (exports.COUNT
 exports.COUNT_MC_BALLS_FOR_PAID_WITNESSING = 100;
 
 //TODO: Generate live
-exports.GENESIS_UNIT = (exports.alt === '1' && exports.version === '1.0t') ? 'rWAhtd6H2FpJn6iZXw334AGoGzplFDzHecGbF0JihUM=' : 'live';
+exports.GENESIS_UNIT = 'WQx/gnUXfYAlEmWK5xgnjZ+E3VbPLpMcsoeKz2Xf17k=';
 
 exports.HASH_LENGTH = 44;
 exports.PUBKEY_LENGTH = 44;
