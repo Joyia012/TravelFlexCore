@@ -6,12 +6,12 @@ exports.alt = '1';
 
 exports.COUNT_WITNESSES = (exports.alt === '1' && exports.version === '1.0t') ? 1 : 6;
 exports.MAX_WITNESS_LIST_MUTATIONS = 1;
-exports.TOTAL_WHITEBYTES = (exports.alt === '1' && exports.version === '1.0t') ? 1e15 : 12e12;
+exports.TOTAL_WHITEBYTES = (exports.alt === '1' && exports.version === '1.0t') ? 1e12 : 12e12;
 exports.MAJORITY_OF_WITNESSES = (exports.COUNT_WITNESSES%2===0) ? (exports.COUNT_WITNESSES/2+1) : Math.ceil(exports.COUNT_WITNESSES/2);
 exports.COUNT_MC_BALLS_FOR_PAID_WITNESSING = 100;
 
 //TODO: Generate live
-exports.GENESIS_UNIT = (exports.alt === '1' && exports.version === '1.0t') ? 'XSDS0E2bmH36DvoefalPZPybTA6RgraLUc4gqJXcjMA=' : 'live';
+exports.GENESIS_UNIT = (exports.alt === '1' && exports.version === '1.0t') ? 'rWAhtd6H2FpJn6iZXw334AGoGzplFDzHecGbF0JihUM=' : 'live';
 
 exports.HASH_LENGTH = 44;
 exports.PUBKEY_LENGTH = 44;
@@ -30,7 +30,7 @@ exports.MAX_ATTESTORS_PER_ASSET = 64;
 exports.MAX_DATA_FEED_NAME_LENGTH = 64;
 exports.MAX_DATA_FEED_VALUE_LENGTH = 64;
 exports.MAX_AUTHENTIFIER_LENGTH = 4096;
-//exports.MAX_CAP = 12e12;
+exports.MAX_CAP = 1e12;
 exports.MAX_COMPLEXITY = 100;
 
 exports.MAX_PROFILE_FIELD_LENGTH = 50;
